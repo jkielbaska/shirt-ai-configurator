@@ -1,10 +1,9 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSnapshot } from "valtio";
 import { config } from "@/config/config";
-import { state, tState } from "@/store";
+import { state } from "@/store";
 import { download } from "@/assets";
 import { downloadCanvasToImage, reader } from "@/config/helpers";
 import { EditorTabs, FilterTabs, DecalTypes } from "@/config/constants";
@@ -14,8 +13,9 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { FilePicker } from "@/components/FilePicker";
 import { Tab } from "@/components/Tab";
 import { CustomButton } from "@/components/CustomButton";
-import { tDecalTypes } from "@/types/tConstants";
-import { tFilterTab, initialFilterTab } from "@/types/tTabs";
+import { tDecalTypes, tTabs } from "@/types/tConstants";
+import { initialFilterTab, tActiveFilterTab } from "@/types/tTabs";
+import { tState } from "@/types/tState";
 
 export default function Customizer() {
   const snap = useSnapshot(state);
@@ -24,9 +24,9 @@ export default function Customizer() {
   const [prompt, setPrompt] = useState<any>("");
   const [generatingImg, setGeneratingImg] = useState<any>("");
   const [activeEditorTab, setActiveEditorTab] = useState<any>("");
-
   const [activeFilterTab, setActiveFilterTab] =
-    useState<tFilterTab[]>(initialFilterTab);
+    useState<tActiveFilterTab>(initialFilterTab);
+
   //show tab content depending on the active tab - switch/case needs to go.
   const generateTabContent = () => {
     switch (activeEditorTab) {
@@ -60,36 +60,37 @@ export default function Customizer() {
     }
   };
 
-  const handleActiveFilterTab = (tabName: string) => {
+  const handleDecals = (result: tDecalTypes, type: string) => {
+    const decalType = DecalTypes[type as keyof typeof DecalTypes];
+
+    state[decalType.stateProperty as keyof tState] = result;
+
+    if (!activeFilterTab[decalType.filterTab as keyof tActiveFilterTab]) {
+      handleActiveFilterTab(decalType.filterTab as keyof tActiveFilterTab);
+    }
+  };
+
+  const handleActiveFilterTab = (tabName: keyof tActiveFilterTab) => {
     switch (tabName) {
       case "logoShirt":
-        state.isLogoTexture = !activeFilterTab[Number(tabName)];
+        state.isLogoTexture = !activeFilterTab[tabName];
         break;
       case "stylishShirt":
-        state.isFullTexture = !activeFilterTab[Number(tabName)];
+        state.isFullTexture = !activeFilterTab[tabName];
         break;
       default:
         state.isLogoTexture = true;
         state.isFullTexture = false;
+        break;
     }
 
     //after state, activeFilterTab needs to be updated
     setActiveFilterTab((prevState) => {
       return {
         ...prevState,
-        [tabName]: !prevState[Number(tabName)],
+        [tabName]: !prevState[tabName],
       };
     });
-  };
-
-  const handleDecals = (result: tDecalTypes, type: any) => {
-    const decalType = DecalTypes[type];
-
-    state[decalType.stateProperty as keyof tState] = result;
-
-    if (!activeFilterTab[Number(decalType.filterTab)]) {
-      handleActiveFilterTab(decalType.filterTab);
-    }
   };
 
   const readFile = (type: string) => {
@@ -140,13 +141,17 @@ export default function Customizer() {
               className="filtertabs-container"
               {...slideAnimation("up")}
             >
-              {FilterTabs.map((tab, i) => (
+              {FilterTabs.map((tab: tTabs, i) => (
                 <Tab
                   key={tab.name}
                   tab={tab}
                   isFilterTab
-                  isActiveTab={activeFilterTab[Number(tab.name)]}
-                  handleClick={() => handleActiveFilterTab(tab.name)}
+                  isActiveTab={
+                    activeFilterTab[tab.name as keyof tActiveFilterTab]
+                  }
+                  handleClick={() =>
+                    handleActiveFilterTab(tab.name as keyof tActiveFilterTab)
+                  }
                 ></Tab>
               ))}
             </motion.div>
