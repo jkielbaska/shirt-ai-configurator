@@ -1,14 +1,5 @@
 import { proxy } from "valtio";
-
-export interface tState {
-  intro: boolean;
-  color: string;
-  isLogoTexture: boolean;
-  isFullTexture: boolean;
-  logoDecal: string;
-  fullDecal: string;
-  [key: string]: unknown;
-}
+import { tState } from "@/types/tState";
 
 export const state: tState = proxy({
   intro: true,
