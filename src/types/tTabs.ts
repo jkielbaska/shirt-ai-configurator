@@ -1,11 +1,9 @@
-export interface tFilterTab {
+export interface tActiveFilterTab {
   logoShirt: boolean;
   stylishShirt: boolean;
 }
 
-export const initialFilterTab: tFilterTab[] = [
-  {
-    logoShirt: true,
-    stylishShirt: false,
-  },
-];
+export const initialFilterTab: tActiveFilterTab = {
+  logoShirt: true,
+  stylishShirt: false,
+};
