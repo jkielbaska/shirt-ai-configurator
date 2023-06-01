@@ -6,9 +6,5 @@ export interface tTabs {
 }
 
 export interface tDecalTypes {
-  //   [key: string]: {
-  //     stateProperty: string;
-  //     filterTab: string;
-  //   };
   [key: string]: Record<string, string>;
 }
