@@ -7,6 +7,7 @@ export interface tState {
   isFullTexture: boolean;
   logoDecal: string;
   fullDecal: string;
+  [key: string]: unknown;
 }
 
 export const state: tState = proxy({
