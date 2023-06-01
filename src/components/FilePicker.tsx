@@ -7,7 +7,7 @@ export const FilePicker = ({
 }: {
   file: File | null;
   setFile: (file: File | null) => void;
-  readFile: (type: string) => boolean;
+  readFile: (type: string) => boolean | void;
 }) => {
   return (
     <div className="filepicker-container">

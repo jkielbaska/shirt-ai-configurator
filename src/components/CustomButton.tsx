@@ -11,7 +11,7 @@ export const CustomButton = ({
   type: string;
   title: string;
   customStyles: string;
-  handleClick?: (event: React.MouseEvent) => boolean;
+  handleClick?: (event: React.MouseEvent) => boolean | void;
 }) => {
   const snap = useSnapshot(state);
   const generateStyle = (type: string) => {
