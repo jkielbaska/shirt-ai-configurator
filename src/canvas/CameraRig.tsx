@@ -3,7 +3,7 @@ import { easing } from "maath";
 import { useRef } from "react";
 import { useSnapshot } from "valtio";
 import { state } from "@/store";
-import { Group } from "three";
+import { Group, Vector3 } from "three";
 
 export const CameraRig = ({ children }: { children: React.ReactNode }) => {
   const group = useRef<Group>(null); //it can be wrong..
@@ -15,8 +15,10 @@ export const CameraRig = ({ children }: { children: React.ReactNode }) => {
 
     //set the initial position of the model
     let targetPosition = [-0.4, 0, 2];
+
     if (snap.intro) {
       if (isBreakpoint) targetPosition = [0, 0, 2];
+
       if (isMobile) targetPosition = [0, 0.2, 2.5];
     } else {
       if (isMobile) targetPosition = [0, 0, 2.5];
@@ -24,7 +26,12 @@ export const CameraRig = ({ children }: { children: React.ReactNode }) => {
     }
 
     //set model camera position
-    easing.damp3(state.camera.position, [-0.4, 0, 2], 0.25, delta);
+    easing.damp3(
+      state.camera.position,
+      new Vector3(...targetPosition),
+      0.25,
+      delta
+    );
 
     //set model camera rotation smoothly
     easing.dampE(
