@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSnapshot } from "valtio";
-import { config } from "@/config/config";
 import { state } from "@/store";
 import { download } from "@/assets";
 import { downloadCanvasToImage, reader } from "@/config/helpers";
@@ -13,17 +12,18 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { FilePicker } from "@/components/FilePicker";
 import { Tab } from "@/components/Tab";
 import { CustomButton } from "@/components/CustomButton";
-import { tDecalTypes, tTabs } from "@/types/tConstants";
+import { tTabs } from "@/types/tConstants";
 import { initialFilterTab, tActiveFilterTab } from "@/types/tTabs";
 import { tState } from "@/types/tState";
+import Image from "next/image";
 
 export default function Customizer() {
   const snap = useSnapshot(state);
 
   const [file, setFile] = useState<File | null>(null);
-  const [prompt, setPrompt] = useState<any>("");
-  const [generatingImg, setGeneratingImg] = useState<any>("");
-  const [activeEditorTab, setActiveEditorTab] = useState<any>("");
+  const [prompt, setPrompt] = useState<string>("");
+  const [generatingImg, setGeneratingImg] = useState<boolean>(false);
+  const [activeEditorTab, setActiveEditorTab] = useState<string>("");
   const [activeFilterTab, setActiveFilterTab] =
     useState<tActiveFilterTab>(initialFilterTab);
 
@@ -48,25 +48,35 @@ export default function Customizer() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleDecals = (type: string, result: string) => {
+    const decalType = DecalTypes[type as keyof typeof DecalTypes];
+    state[decalType.stateProperty as keyof tState] = result;
+    if (!activeFilterTab[decalType.filterTab as keyof tActiveFilterTab]) {
+      handleActiveFilterTab(decalType.filterTab as keyof tActiveFilterTab);
+    }
+  };
+
+  const handleSubmit = async (type: string) => {
     if (!prompt) return alert("Please enter a prompt");
     try {
-      //backend call
+      setGeneratingImg(true);
+      const response = await fetch("http://localhost:3000/api/v1", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+        }),
+      });
+
+      const data = await response.json();
+      handleDecals(type, `data:image/png;base64,${data.photo}`);
     } catch (error) {
       alert(error);
     } finally {
       setGeneratingImg(false);
       setActiveEditorTab("");
-    }
-  };
-
-  const handleDecals = (result: tDecalTypes, type: string) => {
-    const decalType = DecalTypes[type as keyof typeof DecalTypes];
-
-    state[decalType.stateProperty as keyof tState] = result;
-
-    if (!activeFilterTab[decalType.filterTab as keyof tActiveFilterTab]) {
-      handleActiveFilterTab(decalType.filterTab as keyof tActiveFilterTab);
     }
   };
 
@@ -95,7 +105,7 @@ export default function Customizer() {
 
   const readFile = (type: string) => {
     reader(file).then((result) => {
-      handleDecals(result, type);
+      handleDecals(type, result);
       setActiveEditorTab("");
     });
   };
@@ -116,7 +126,13 @@ export default function Customizer() {
                     <Tab
                       key={tab.name}
                       tab={tab}
-                      handleClick={() => setActiveEditorTab(tab.name)}
+                      handleClick={() => {
+                        if (activeEditorTab === tab.name) {
+                          setActiveEditorTab("");
+                        } else {
+                          setActiveEditorTab(tab.name);
+                        }
+                      }}
                     ></Tab>
                   ))}
 
@@ -152,8 +168,15 @@ export default function Customizer() {
                   handleClick={() =>
                     handleActiveFilterTab(tab.name as keyof tActiveFilterTab)
                   }
-                ></Tab>
+                />
               ))}
+              <button className="download-btn" onClick={downloadCanvasToImage}>
+                <Image
+                  src={download}
+                  alt="download_image"
+                  className="w-3/5 h-3/5 object-contain"
+                />
+              </button>
             </motion.div>
           </>
         )}
